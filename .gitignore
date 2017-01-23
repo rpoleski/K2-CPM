@@ -7,3 +7,6 @@ code/others/
 *.dat
 *.png
 *.pyc
+.DS_Store
+.idea
+code/.DS_Store
