@@ -192,51 +192,5 @@ def main():
     run(args.epic[0], args.campaign[0], args.n_predictor[0], args.l2[0], args.n_pca[0], args.distance[0], args.exclusion[0], flux_lim, args.input_dir[0], args.output_dir[0], pixel_list, train_lim)
 
 if __name__ == '__main__':
-    # Mimic a server
-    if sys.argv[1].strip()=='open-port':
-        sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # Find available PORT number > 5999
-        PORT = 5999
-        flag_findport = 1
-        while flag_findport:
-            PORT = PORT + 1
-            try:
-                sck.bind(('', PORT))
-                flag_findport = 0
-            except: pass
-        # Identify which PORT is opened and save it
-        PORT = sck.getsockname()[1]
-        fn_portnumber = "portnumber.txt"
-        terminal_output = sys.stdout
-        sys.stdout = open(fn_portnumber, "w")
-        print(PORT)
-        sys.stdout.close()
-        sys.stdout = terminal_output
-        # Server wait for a client request
-        print('Current directory:\n   {:s}'.format(os.path.dirname(os.path.realpath(__file__))))
-        print('Opening PORT {:d}'.format(PORT))
-        print("The server is ready. To stop it, press Ctrl+C or call the client with the argument 'stop'.")
-        sck.listen(1)
-        try:
-            while True:
-                conn, addr = sck.accept()
-                command = conn.recv(1024)  # 1024: maximum size of the arguments
-                if not command: break
-                if command.split(' ')[-1]=='close-port':
-                    # Close the port and kill the server.
-                    sck.close()
-                    os.remove(fn_portnumber)
-                    print("\nServer closed by user.")
-                    break
-                else:
-                    # Run CPM
-                    sys.argv = command.split(' ')
-                    main()
-        except KeyboardInterrupt:
-            # Close the port and kill the server if Ctrl+C.
-            sck.close()
-            os.remove(fn_portnumber)
-            print("\nServer killed. All the related processes will be killed as well.")
-    # Run in a standard way, without using a server.
-    else:
-        main()
+    main()
+
