@@ -31,7 +31,14 @@ class GridRaDec2Pix(object):
         x_out = poly2d.eval_poly_2d(ra, dec, self.coefs_x)
         y_out = poly2d.eval_poly_2d(ra, dec, self.coefs_y)
         return (x_out, y_out)
-
+    
+    def apply_grid_single(self, ra, dec):
+        """calculate pixel coordinates for a single sky position (RA,Dec)"""
+        if not isinstance(ra, float) or not isinstance(dec, float):
+            raise TypeError('2 floats expected, got {:} and {:}'.format(
+                                                type(ra), type(dec)))
+        out = self.apply_grid(ra=ra, dec=dec)
+        return (out[0][0], out[1][0])
 
 # example usage - prints coordinates for 3 stars for a selected epoch
 if __name__ == "__main__":
