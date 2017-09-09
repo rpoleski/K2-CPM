@@ -132,8 +132,9 @@ class PrfData(object):
         spline_function = RectBivariateSpline(x=self._prf_grid_x, 
                                                 y=self._prf_grid_y, z=prf)
         
-        out = [spline_function(x-star_x, y-star_y)[0][0] for (x, y) in pixels_list]
-        
+        out = [spline_function(y-star_y, x-star_x)[0][0] for (x, y) in pixels_list]
+        # Yes, here we revert the order of x,y because of K2 PRF data format.
+
         return out
 
 # example usage of the class:

@@ -21,6 +21,7 @@ class CampaignGridRaDec2Pix(object):
             raise ValueError('no input data provided')
 
         self.bjd_array = np.array(self.bjd)
+        self.n_epochs = len(self.cadence)
 
     def _read_from_file(self, file_name):
         """read multiple grids from a single file"""
