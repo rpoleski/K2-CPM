@@ -32,6 +32,10 @@ def run_cpm_part1(channel, campaign, num_predictor, num_pca, dis, excl,
     # CHANGE the part below (i.e. implement what is needed)
     if pixel_list.shape[0] != 1 and (output_file is not None or output_file_mask is not None):
         raise ValueError('\n\nCurrently we can deal with only a single pixel at a time if the output file is specified')
+
+    if train_lim is not None:
+        raise ValueError("run_cpm_part1() parameter train_lim has to be None."
+            + " We keep it because of older code")
     tpfdata.TpfData.directory = input_dir
 
     flux_lim_step_down = 0.1
