@@ -102,6 +102,8 @@ class PrfData(object):
         self._prf_grid_x = (np.arange(nx) - nx / 2. + .5) * self._keywords[0]['CDELT1P']
         self._prf_grid_y = (np.arange(ny) - ny / 2. + .5) * self._keywords[0]['CDELT2P']
         # The two lines above should rather use 'CRPIX1P' instead of n/2. etc.
+        self.center_x = center_x
+        self.center_y = center_y
 
     def _get_barycentric_interpolation_weights(self, x, y):
         """find in which triangle given point is located and 
