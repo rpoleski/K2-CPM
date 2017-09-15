@@ -10,6 +10,8 @@ import cpm_part2
 import tpfdata
 
 
+# Note that this example ilustrates standard CPM and CPM+PRF and additionally 
+# shows how results change with a number of pixels included. 
 if __name__ == "__main__":
     # We want to extract the light curve of OGLE-BLG-ECL-234840, which is
     # an eclipsing binary with a single eclipse in subcampaign 91. I know 
@@ -39,7 +41,7 @@ if __name__ == "__main__":
                     (int_y-half_size):(int_y+half_size+1)].reshape(2, -1).T
     
     # Second, setup the PRF directory:
-    prf_dir = "../../../../../PRF/PRF_files"
+    prf_dir = "./PRF_files"
     PrfData.data_directory = prf_dir
     prf_template = PrfData(channel=channel)
     # Third, the highest level structure - something that combines grids and 
@@ -55,8 +57,7 @@ if __name__ == "__main__":
     # Fourth, for each pixel sum all PRF values: 
     prf_sum = np.sum(prfs, axis=0)
     
-    # Then let's sort and select top 10:
-    n_select = 10
+    # Then let's sort and select top 20:
     n_select = 20
     sorted_indexes = np.argsort(prf_sum)[::-1][:n_select]
     
