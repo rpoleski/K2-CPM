@@ -10,6 +10,17 @@ import cpm_part2
 import tpfdata
 
 
+def finish_figure(file_name, title=None):
+    """some standard things to be done after the main plot is done"""
+    plt.legend(loc='lower left')
+    plt.xlabel('BJD-245000')
+    plt.ylabel('relative flux')
+    if title is not None:
+        plt.title(title)
+    plt.savefig(file_name)
+    plt.close()
+    plt.gca().set_prop_cycle(None)
+
 # Note that this example ilustrates standard CPM and CPM+PRF and additionally 
 # shows how results change with a number of pixels included. 
 if __name__ == "__main__":
@@ -48,11 +59,10 @@ if __name__ == "__main__":
     # PRF data:
     prf_for_campaign = PrfForCampaign(campaign=campaign, grids=grids, 
                                     prf_data=prf_template)
-    print("Next step will take around a minute...")
+    # Now the important step - getting prf value for every pixel and every epoch
     (failed_prfs, mask_prfs, prfs) = prf_for_campaign.apply_grids_and_prf(ra, 
                                                                 dec, pixels)
     prfs_bjds = prf_for_campaign.grids.bjd_array - 2450000.
-    print("...it's done.")
 
     # Fourth, for each pixel sum all PRF values: 
     prf_sum = np.sum(prfs, axis=0)
@@ -97,6 +107,8 @@ if __name__ == "__main__":
     # Now run cpm_part_2:
     l2 = 1.e4 # This is regularization strnegth.
     train_limits = [7508., 7540.] # We train on data before 2457508.
+    ok = ((tpf.jd_short < train_limits[0]) | (tpf.jd_short > train_limits[1]))
+    print("Trainging set is {:} out of {:} epochs".format(sum(ok), len(ok)))
     cpm_flux = []
     for t_f in tpf_flux:
         (_, _, signal, time) = cpm_part2.cpm_part2(tpf.jd_short, t_f, None, 
@@ -145,23 +157,18 @@ if __name__ == "__main__":
     print("making plots...\n(different colors mark different number of pixels combined)")
     plot_1_name = "example_1_eb234840_CPM.png"
     plot_2_name = "example_1_eb234840_CPMPRF.png"
-    for i in [0, 1, 2, 9, 14, 19]:
-        plt.plot(time, np.sum(cpm_flux[:i+1,:], axis=0), '.', label="{:} pix".format(i+1))
-    plt.legend(loc='lower left')
-    plt.xlabel('BJD-245000')
-    plt.ylabel('relative flux')
-    plt.title('OGLE-BLG-ECL-234840 photometry using CPM')
-    plt.savefig(plot_1_name)
-    plt.close()
-    print(plot_1_name)
-    plt.gca().set_prop_cycle(None)
+    plt.rc('text', usetex=True)
+    numbers_to_plot = [0, 1, 2, 9, 14, 19]
 
-    for i in [0, 1, 2, 9, 14, 19]:
+    for i in numbers_to_plot:
+        plt.plot(time, np.sum(cpm_flux[:i+1,:], axis=0), '.', label="{:} pix".format(i+1))
+    txt_1 = 'OGLE-BLG-ECL-234840 photometry using CPM ($\lambda = ${:g})'.format(l2)
+    finish_figure(plot_1_name, title=txt_1)
+    print(plot_1_name)
+
+    for i in numbers_to_plot:
         plt.plot(time_masked, result[:,i], '.', label="{:} pix".format(i+1))
-    plt.legend(loc='lower left')
-    plt.xlabel('BJD-245000')
-    plt.ylabel('relative flux')
-    plt.title('OGLE-BLG-ECL-234840 photometry using CPM+PRF postmortem')
-    plt.savefig(plot_2_name)
+    txt_2 = 'OGLE-BLG-ECL-234840 photometry using CPM+PRF postmortem ($\lambda = ${:g})'.format(l2)
+    finish_figure(plot_2_name, title=txt_2)
     print(plot_2_name)
 
