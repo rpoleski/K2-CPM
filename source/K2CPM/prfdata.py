@@ -105,6 +105,11 @@ class PrfData(object):
         self.center_x = center_x
         self.center_y = center_y
 
+        # For interpolation lazy loading:
+        self._spline_function = None
+        self._fast_x = None
+        self._fast_y = None
+
     def _get_barycentric_interpolation_weights(self, x, y):
         """find in which triangle given point is located and 
         calculate weights for barycentric interpolation"""
@@ -122,19 +127,32 @@ class PrfData(object):
                     + self._data[indexes[2]] * weights[2])
         return prf
 
-    def get_interpolated_prf(self, star_x, star_y, pixels_list):
+    def get_interpolated_prf(self, star_x, star_y, pixels_list, fast=True):
         """
         For star centered at given position calculate PRF for list of pixels.
         Example:    star_x=100.5, 
                     star_y=200.5, 
                     pixels_list=[[100., 200.], [101., 200.], [102., 200.]]
+        The fast option controls if we're doing full interpolation (False), or use results 
+        from some previous run. The full interpolation is done if current pixel is further 
+        than 3 pix from the remembered run.
         """
-        prf = self._interpolate_prf(star_x, star_y)
+        max_distance = 3.
         
-        spline_function = RectBivariateSpline(x=self._prf_grid_x, 
-                                                y=self._prf_grid_y, z=prf)
+        if self._fast_x is None:
+            distance2 = 2. * max_distance**2
+        else:
+            distance2 = (self._fast_x-star_x)**2+(self._fast_y-star_y)**2
         
-        out = [spline_function(y-star_y, x-star_x)[0][0] for (x, y) in pixels_list]
+        if self._spline_function is None or not fast or distance2 > max_distance**2:
+            prf = self._interpolate_prf(star_x, star_y)
+            self._spline_function = RectBivariateSpline(x=self._prf_grid_x,
+                                                    y=self._prf_grid_y, z=prf)
+            self._fast_x = star_x
+            self._fast_y = star_y
+                    
+        out = [self._spline_function(y-star_y, x-star_x)[0][0] 
+                                                    for (x, y) in pixels_list]
         # Yes, here we revert the order of x,y because of K2 PRF data format.
 
         return out
@@ -153,7 +171,7 @@ if __name__ == '__main__':
 
     # Give path to Kepler PRF data. You can download the archive from:
     # http://archive.stsci.edu/missions/kepler/fpc/prf/
-    PrfData.data_directory = "PATH/TO/PRF/DATA"
+    PrfData.data_directory = "./PRF_files"
 
     prf_template = PrfData(channel=channel)
 

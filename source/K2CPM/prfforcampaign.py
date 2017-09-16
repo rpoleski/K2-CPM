@@ -27,11 +27,12 @@ class PrfForCampaign(object):
         and report weighted average"""
         return self.grids.mean_position(ra=ra, dec=dec)
 
-    def apply_grids_and_prf(self, ra, dec, pixels, bjds=None):
+    def apply_grids_and_prf(self, ra, dec, pixels, bjds=None, fast=True):
         """For star at given (RA,Dec) try to calculate its positions for 
         epochs in bjds and for every epoch predict PRF value for every 
         pixel in pixels (type: list). If bjds is None than defaults to 
-        self.grids.bjd_array
+        self.grids.bjd_array. fast=True means claculations will be much 
+        faster and just slightly less accurate. 
         
         Returns:
           failed - number of epochs for which there are no grids
@@ -58,7 +59,8 @@ class PrfForCampaign(object):
             except:
                 mask[i] = False
                 continue
-            out_prfs[i] = self.prf_data.get_interpolated_prf(positions_x[index], positions_y[index], pixels)
+            out_prfs[i] = self.prf_data.get_interpolated_prf(
+                    positions_x[index], positions_y[index], pixels, fast=fast) 
         
         self._positions_x = positions_x
         self._positions_y = positions_y
