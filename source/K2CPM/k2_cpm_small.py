@@ -4,7 +4,7 @@ from K2CPM import leastSquareSolver as lss
 
 
 def get_fit_matrix_ffi(target_flux, target_epoch_mask, predictor_matrix, predictor_mask, 
-                        l2, time, poly=0, ml=None):
+                        l2, time, poly=None, ml=None):
     """
     ## inputs:
     - `predictor_matrix` - matrix of predictor fluxes
