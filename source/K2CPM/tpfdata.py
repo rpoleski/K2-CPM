@@ -205,8 +205,12 @@ class TpfData(object):
                                         row, column, apply_epoch_mask=apply_epoch_mask)
         return out
     
-    def get_predictor_matrix(self, target_x, target_y, num, dis=16, excl=5, flux_lim=(0.8, 1.2), multiple_tpfs=None, tpfs_epics=None):
-        """prepare predictor matrix"""
+    def get_predictor_matrix(self, target_x, target_y, num, dis=16, excl=5, flux_lim=(0.8, 1.2), multiple_tpfs=None, tpfs_epics=None, return_pixel_indexes=False):
+        """prepare predictor matrix
+        
+        If return_pixel_indexes is True, then additional mask of pixels used
+        is returned.
+        """
         (self.pixel_row, self.pixel_col) = multiple_tpfs.get_rows_columns(tpfs_epics)
         self.pixel_flux = multiple_tpfs.get_fluxes(tpfs_epics)
 
@@ -230,13 +234,16 @@ class TpfData(object):
         distance2 = distance2_row + distance2_col
         dis_mask = (distance2 > dis**2)
         distance2 = distance2[dis_mask]
-
         index = np.argsort(distance2, kind="mergesort")
 
-        pixel_flux = self.pixel_flux[:,pixel_mask][:,dis_mask]
-        predictor_flux = pixel_flux[:,index[:num]].astype(float)
+        pixel_numbers = np.arange(self.pixel_flux.shape[1])
+        pixel_indexes = pixel_numbers[pixel_mask][dis_mask][index[:num]]
+        predictor_flux = self.pixel_flux[:, pixel_indexes]
 
-        return predictor_flux
+        if return_pixel_indexes:
+            return (predictor_flux, pixel_indexes)
+        else:
+            return predictor_flux
 
     def save_pixel_curve(self, row, column, file_name, full_time=True):
         """saves the time vector and the flux for a single pixel into a file"""
