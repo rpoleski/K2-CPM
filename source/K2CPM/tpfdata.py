@@ -205,11 +205,14 @@ class TpfData(object):
                                         row, column, apply_epoch_mask=apply_epoch_mask)
         return out
     
-    def get_predictor_matrix(self, target_x, target_y, num, dis=16, excl=5, flux_lim=(0.8, 1.2), multiple_tpfs=None, tpfs_epics=None, return_pixel_indexes=False):
+    def get_predictor_matrix(self, target_x, target_y, num, dis=16, excl=5, 
+                            flux_lim=(0.8, 1.2), multiple_tpfs=None, 
+                            tpfs_epics=None, multiple_tpfs_2=None):
         """prepare predictor matrix
         
-        If return_pixel_indexes is True, then additional mask of pixels used
-        is returned.
+        If multiple_tpfs_2 is specified then the same pixels from this set 
+        is returned. Standard usage is providing the other subcampaign with 
+        exactly the same epic ids.
         """
         (self.pixel_row, self.pixel_col) = multiple_tpfs.get_rows_columns(tpfs_epics)
         self.pixel_flux = multiple_tpfs.get_fluxes(tpfs_epics)
@@ -240,8 +243,10 @@ class TpfData(object):
         pixel_indexes = pixel_numbers[pixel_mask][dis_mask][index[:num]]
         predictor_flux = self.pixel_flux[:, pixel_indexes]
 
-        if return_pixel_indexes:
-            return (predictor_flux, pixel_indexes)
+        if multiple_tpfs_2 is not None:
+            pixel_flux_2 = multiple_tpfs_2.get_fluxes(tpfs_epics)
+            predictor_flux_2 = pixel_flux_2[:, pixel_indexes]
+            return (predictor_flux, predictor_flux_2)
         else:
             return predictor_flux
 
