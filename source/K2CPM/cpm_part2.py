@@ -14,6 +14,37 @@ def read_true_false_file(file_name):
             out.append(parser[line[:-1].upper()])
     return np.array(out)
 
+def cpm_part2_subcampaigns(tpf_time_train, tpf_flux_train, tpf_flux_err_train,
+        tpf_epoch_mask_train, predictor_matrix_train, predictor_mask_train,
+        tpf_time_apply, tpf_flux_apply, tpf_flux_err_apply, 
+        tpf_epoch_mask_apply, predictor_matrix_apply, predictor_mask_apply, 
+        l2=None, l2_per_pixel=None, train_lim=None, model=None):
+    """This version of CPM part2 find coefficients using one subcampaign and 
+    applies them to the other subcampaign."""
+    if (l2 is None) == (l2_per_pixel is None):
+        raise ValueError('In cpm_part2() you must set either l2 or l2_per_pixel')
+    if l2_per_pixel is not None:
+        if not isinstance(l2_per_pixel, float):
+            raise TypeError('l2_per_pixel must be of float type')
+        l2 = l2_per_pixel * predictor_matrix_train.shape[1]
+    else:
+        if not isinstance(l2, float):
+            raise TypeError('l2 must be of float type')
+    if model is not None:
+        raise NotImplementedError("This feature has not been implemented yet")
+
+    fit_matrix_results_1 = k2_cpm_small.get_fit_matrix_ffi(tpf_flux_train, tpf_epoch_mask_train, predictor_matrix_train, predictor_mask_train, l2, tpf_time_train, poly=0, ml=model)
+    (target_flux_train, predictor_matrix_train, _, l2_vector_train, time_train) = fit_matrix_results_1
+
+    fit_matrix_results_2 = k2_cpm_small.get_fit_matrix_ffi(tpf_flux_apply, tpf_epoch_mask_apply, predictor_matrix_apply, predictor_mask_apply, l2, tpf_time_apply, poly=0, ml=model)
+    (target_flux_apply, predictor_matrix_apply, _, _, time_apply) = fit_matrix_results_2
+
+    result = k2_cpm_small.fit_target(target_flux_train, np.copy(predictor_matrix_train), l2_vector=l2_vector_train, train_lim=train_lim, time=time_train)
+
+    fit_flux = np.dot(predictor_matrix_apply, result)
+    dif = target_flux_apply - fit_flux[:,0]
+    return (result, fit_flux, dif, time_apply)
+
 # TO_BE_DONE - use tpf_flux_err if user wants
 def cpm_part2(tpf_time, tpf_flux, tpf_flux_err, tpf_epoch_mask, 
             predictor_matrix, predictor_mask, 
@@ -41,7 +72,7 @@ def cpm_part2(tpf_time, tpf_flux, tpf_flux_err, tpf_epoch_mask,
     # run get_fit_matrix_ffi() which mostly applies joint epoch_mask
     fit_matrix_results = k2_cpm_small.get_fit_matrix_ffi(tpf_flux, tpf_epoch_mask, predictor_matrix, predictor_mask, l2, tpf_time, 0, ml=model)
     (target_flux, predictor_matrix, none_none, l2_vector, time) = fit_matrix_results
-    
+
     # run CPM:
     result = k2_cpm_small.fit_target(target_flux, np.copy(predictor_matrix), l2_vector=l2_vector, train_lim=train_lim, time=time)
     
