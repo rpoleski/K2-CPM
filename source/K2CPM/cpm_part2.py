@@ -15,8 +15,29 @@ def read_true_false_file(file_name):
     return np.array(out)
 
 # TO_BE_DONE - use tpf_flux_err if user wants
-def cpm_part2(tpf_time, tpf_flux, tpf_flux_err, tpf_epoch_mask, predictor_matrix, predictor_mask, l2, train_lim=None, model=None):
-    """get predictor_matrix, run CPM, calculate dot product and difference of target_flux and fit_flux"""
+def cpm_part2(tpf_time, tpf_flux, tpf_flux_err, tpf_epoch_mask, 
+            predictor_matrix, predictor_mask, 
+            l2=None, l2_per_pixel=None, 
+            train_lim=None, model=None):
+    """get predictor_matrix, run CPM, calculate dot product and difference of 
+    target_flux and fit_flux
+
+    Parameters l2 and l2_per_pixel define strength of regularization. 
+    You have to set one of them. If l2_per_pixel is set, then 
+    l2 = l2_per_pixel * number_of_predictor_pixels
+    is calculated. Note that l2_per_pixel should be on order of a few, and 
+    l2 should be on order of thousands. 
+    """
+    if (l2 is None) == (l2_per_pixel is None):
+        raise ValueError('In cpm_part2() you must set either l2 or l2_per_pixel')
+    if l2_per_pixel is not None:
+        if not isinstance(l2_per_pixel, float):
+            raise TypeError('l2_per_pixel must be of float type')
+        l2 = l2_per_pixel * predictor_matrix.shape[1]
+    else:
+        if not isinstance(l2, float):
+            raise TypeError('l2 must be of float type')
+    
     # run get_fit_matrix_ffi() which mostly applies joint epoch_mask
     fit_matrix_results = k2_cpm_small.get_fit_matrix_ffi(tpf_flux, tpf_epoch_mask, predictor_matrix, predictor_mask, l2, tpf_time, 0, ml=model)
     (target_flux, predictor_matrix, none_none, l2_vector, time) = fit_matrix_results
