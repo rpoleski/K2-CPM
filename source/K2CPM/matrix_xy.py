@@ -3,6 +3,16 @@
 import sys
 import numpy as np
 
+
+def pixel_list_center(center_x, center_y, half_size):
+    """Return list of pixels centered on (center_x,center_y) 
+    [rounded to nearest integer] and covering 
+    n = 2*half_size+1 pixels on the side. The output shape is (n^2, 2)"""
+    int_x = int(center_x + 0.5)
+    int_y = int(center_y + 0.5)
+    return np.mgrid[(int_x-half_size):(int_x+half_size+1), 
+                    (int_y-half_size):(int_y+half_size+1)].reshape(2, -1).T
+
 def load_matrix_xy(file_name, data_type='float'):
     """reads file with matrix in format like:
     0 0 123.454

@@ -7,6 +7,7 @@ from campaigngridradec2pix import CampaignGridRaDec2Pix
 from prfforcampaign import PrfForCampaign
 import cpm_part1
 import cpm_part2
+import matrix_xy
 import tpfdata
 
 
@@ -46,11 +47,8 @@ if __name__ == "__main__":
     # Now we want to select a few pixels with most flux. First, let's make 
     # temporary list of pixels, let's say 5x5 i.e., "half_size" of 2:
     half_size = 2
-    int_x = int(mean_x+0.5)
-    int_y = int(mean_y+0.5)
-    pixels = np.mgrid[(int_x-half_size):(int_x+half_size+1),
-                    (int_y-half_size):(int_y+half_size+1)].reshape(2, -1).T
-    
+    pixels = matrix_xy.pixel_list_center(mean_x, mean_y, half_size)
+
     # Second, setup the PRF directory:
     prf_dir = "./PRF_files"
     PrfData.data_directory = prf_dir
@@ -62,7 +60,6 @@ if __name__ == "__main__":
     # Now the important step - getting prf value for every pixel and every epoch
     (failed_prfs, mask_prfs, prfs) = prf_for_campaign.apply_grids_and_prf(ra, 
                                                                 dec, pixels)
-    prfs_bjds = prf_for_campaign.grids.bjd_array - 2450000.
 
     # Fourth, for each pixel sum all PRF values: 
     prf_sum = np.sum(prfs, axis=0)
@@ -100,14 +97,13 @@ if __name__ == "__main__":
     # >>> epic_number = wcsfromtpf.WcsFromTpf(channel, campaign).get_nearest_pixel_radec(ra, dec)[4]
     tpfdata.TpfData.directory = tpf_dir
     tpf = tpfdata.TpfData(epic_id=epic_number, campaign=campaign)
-    tpf_flux = []
-    for (i, pixel) in enumerate(pixels):
-        tpf_flux.append(tpf.get_flux_for_pixel(row=pixel[1], column=pixel[0]))
+    tpf_flux = tpf.get_fluxes_for_pixel_list(pixels)
 
     # Now run cpm_part_2:
     l2 = 1.e4 # This is regularization strnegth.
     train_limits = [7508., 7540.] # We train on data before 2457508.
-    ok = ((tpf.jd_short < train_limits[0]) | (tpf.jd_short > train_limits[1]))
+    ok = ((tpf.jd_short[np.isfinite(tpf.jd_short)] < train_limits[0])
+                | (tpf.jd_short[np.isfinite(tpf.jd_short)] > train_limits[1]))
     print("Trainging set is {:} out of {:} epochs".format(sum(ok), len(ok)))
     cpm_flux = []
     for t_f in tpf_flux:
