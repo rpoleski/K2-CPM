@@ -69,3 +69,7 @@ class PrfForCampaign(object):
         
         return (failed, mask, out_prfs)
 
+    @property
+    def grids_bjd_short(self):
+        """return BJD array for grids (2450000 is subtracted)"""
+        return self.grids.bjd_array - 2450000.
