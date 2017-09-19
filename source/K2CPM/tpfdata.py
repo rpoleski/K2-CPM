@@ -204,7 +204,15 @@ class TpfData(object):
                 out[i_row+half_size][i_column+half_size] = self.get_flux_for_pixel(
                                         row, column, apply_epoch_mask=apply_epoch_mask)
         return out
-    
+
+    def get_fluxes_for_pixel_list(self, pixel_list, apply_epoch_mask=False):
+        """for pixels from pixel_list get the flux and return it in 
+        a list of pixels"""
+        out = []
+        for (x, y) in pixel_list:
+            out.append(self.get_flux_for_pixel(row=y, column=x))
+        return out
+
     def get_predictor_matrix(self, target_x, target_y, num, dis=16, excl=5, 
                             flux_lim=(0.8, 1.2), multiple_tpfs=None, 
                             tpfs_epics=None, multiple_tpfs_2=None):
