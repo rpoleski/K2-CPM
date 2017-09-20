@@ -15,6 +15,7 @@ def plot_matrix_subplots(figure, time, matrix, same_y_axis=True, data_mask=None)
     fig.set_size_inches(50,30)
     plot_matrix(fig, time, matrix)
     plt.savefig("file_name.png")
+    plt.close()
     
     to construct input data use e.g.:
     tpfdata.TpfData.directory = TPF_DIRECTORY_NAME
@@ -58,4 +59,27 @@ def plot_matrix_subplots(figure, time, matrix, same_y_axis=True, data_mask=None)
             ax.set_xlim(x_lim)
     figure.tight_layout()
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0, hspace=0)
+
+def construct_matrix_from_list(pixel_list, time_series_list):
+    """
+    take a list of pixels (pixel_list) and a list of corresponding 
+    flux values (time_series_list) and make matrix that can be given to 
+    plot_matrix_subplots
+    """
+    (x_0, y_0) = np.min(pixel_list, axis=0)
+    (x_range, y_range) = np.max(pixel_list, axis=0) - np.array([x_0, y_0]) + 1
+
+    value_length = len(time_series_list[0])
+    for values in time_series_list:
+        if len(values) != value_length:
+            raise ValueError('construct_matrix_from_list() - all ' +
+                    'time series vectors have to be of the same ' +
+                    'length')
+
+    matrix = np.zeros((x_range, y_range, value_length))
+
+    for (i, (x, y)) in enumerate(pixel_list):
+        matrix[x-x_0, y-y_0, :] = time_series_list[i]
+
+    return matrix
 
