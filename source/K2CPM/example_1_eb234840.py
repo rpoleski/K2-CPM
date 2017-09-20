@@ -8,6 +8,7 @@ from prfforcampaign import PrfForCampaign
 import cpm_part1
 import cpm_part2
 import matrix_xy
+import plot_utils
 import tpfdata
 
 
@@ -21,6 +22,18 @@ def finish_figure(file_name, title=None):
     plt.savefig(file_name)
     plt.close()
     plt.gca().set_prop_cycle(None)
+
+def plot_pixel_curves(pixels, fluxes, time, file_name):
+    """construct a matrix using list and plot it"""
+    fig = plt.gcf()
+    fig.set_size_inches(50, 30)
+    
+    flux_matrix = plot_utils.construct_matrix_from_list(pixels, fluxes)
+    plot_utils.plot_matrix_subplots(fig, time, flux_matrix)
+
+    plt.savefig(file_name)
+    plt.close()
+
 
 # Note that this example ilustrates standard CPM and CPM+PRF and additionally 
 # shows how results change with a number of pixels included. 
@@ -99,6 +112,11 @@ if __name__ == "__main__":
     tpf = tpfdata.TpfData(epic_id=epic_number, campaign=campaign)
     tpf_flux = tpf.get_fluxes_for_pixel_list(pixels)
 
+    print("Plot raw pixel curves:")
+    file_name = "example_1_pixel_curves.png"
+    plot_pixel_curves(pixels, tpf_flux, tpf.jd_short, file_name)
+    print(file_name)
+
     # Now run cpm_part_2:
     l2 = 1.e4 # This is regularization strnegth.
     train_limits = [7508., 7540.] # We train on data before 2457508.
@@ -114,6 +132,11 @@ if __name__ == "__main__":
                                 l2=l2, train_lim=train_limits)
         cpm_flux.append(signal)
     cpm_flux = np.array(cpm_flux)
+
+    print("Plot CPM pixel curves:")
+    file_name = "example_1_pixel_curves_CPM.png"
+    plot_pixel_curves(pixels, cpm_flux, time, file_name)
+    print(file_name)
   
     # We need to have the same time vector - that's what we do here.
     # Note that some epochs lack astrometric solutions.
