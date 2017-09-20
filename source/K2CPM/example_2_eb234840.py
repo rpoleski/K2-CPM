@@ -120,7 +120,8 @@ if __name__ == "__main__":
     l2 = 1.e3 # This is regularization strength.
     #train_limits = [7508., 7540.] # We train on data before 2457508.
     train_limits = [7528.5, 7532.5]
-    ok = ((tpf_train.jd_short < train_limits[0]) | (tpf_train.jd_short > train_limits[1]))
+    ok = ((tpf_train.jd_short[np.isfinite(tpf_train.jd_short)] < train_limits[0])
+        | (tpf_train.jd_short[np.isfinite(tpf_train.jd_short)] > train_limits[1]))
     print("Trainging set is {:} out of {:} epochs".format(sum(ok), len(ok)))
     cpm_flux = []
     for i in range(len(pixels)):
@@ -178,18 +179,16 @@ if __name__ == "__main__":
         out = np.sum(cpm_flux[:i+1,:], axis=0)
         sel1 = (out > lim1)
         sel2 = (out < lim2)
-        print(i, len(out), sum(sel1), sum(sel2))
         out[sel1] = lim1
         out[sel2] = lim2
         plt.plot(time, out, '.', label="{:} pix".format(i+1))
-    txt_1 = 'OGLE-BLG-ECL-234840 photometry using CPM ($\lambda = ${:g})'.format(l2)
+    txt_1 = 'OGLE-BLG-ECL-234840 photometry using CPM(trained on 92) ($\lambda = ${:g})'.format(l2)
     finish_figure(plot_1_name, title=txt_1)
     print(plot_1_name)
 
     for i in numbers_to_plot:
         plt.plot(time_masked, result[:,i], '.', label="{:} pix".format(i+1))
-        #plt.plot(time_masked[sel], result[:,i][sel], '.', label="{:} pix".format(i+1))
-    txt_2 = 'OGLE-BLG-ECL-234840 photometry using CPM+PRF postmortem ($\lambda = ${:g})'.format(l2)
+    txt_2 = 'OGLE-BLG-ECL-234840 photometry using CPM(trained on 92)+PRF  ($\lambda = ${:g})'.format(l2)
     finish_figure(plot_2_name, title=txt_2)
     print(plot_2_name)
 
