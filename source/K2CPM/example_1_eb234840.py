@@ -84,7 +84,7 @@ if __name__ == "__main__":
     # We have that, so lets get rid of all the rest of the pixels:
     pixels = pixels[sorted_indexes]
     prfs = prfs[:, sorted_indexes]
-    print("{:} pixels with highes signal: \n{:}\n".format(n_select, pixels))
+    print("{:} pixels with highest signal: \n{:}\n".format(n_select, pixels))
 
     print("Now we run CPM part 1. This may take a while...")
     # We need a number of settings:
