@@ -17,7 +17,14 @@ def run_cpm_part1(channel, campaign, num_predictor, num_pca, dis, excl,
     CPM part 1 - prepare predictor matrix
 
     campaign_2 - if specified, then additional predictor matrix is returned 
-    that uses exactly the same pixels. 
+    that uses exactly the same pixels.
+
+    The pixel_list is a list (or np.ndarray) of pairs of coordinates, e.g., 
+    for a single pixel it will be [[val_1, val_2]], and for 2 pixels it 
+    will be [[val_1, val_2], [val_3, val_4]].
+    NOTE: the order of these pixel coordinates is different than in most 
+    cases i.e. you will frequenly do [[pixel_y, pixel_x]]. Where pixel_y 
+    runs from 21 to 1044 and pixel_x runs from 13 to 1112.
     """
 # REMOVED: l2, output_dir, target_epic_num
 # ADDED: output_file, output_file_mask, return_predictor_epoch_masks, channel, campaign_2
@@ -36,7 +43,7 @@ def run_cpm_part1(channel, campaign, num_predictor, num_pca, dis, excl,
     if pixel_list is None:
         raise ValueError("Empty pixel_list in run_cpm_part1()")
     # CHANGE the part below (i.e. implement what is needed)
-    if pixel_list.shape[0] != 1 and (output_file is not None or output_file_mask is not None):
+    if len(pixel_list) != 1 and (output_file is not None or output_file_mask is not None):
         raise ValueError('\n\nCurrently we can deal with only a single pixel at a time if the output file is specified')
 
     if train_lim is not None:

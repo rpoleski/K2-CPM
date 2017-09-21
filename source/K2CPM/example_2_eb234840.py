@@ -86,17 +86,12 @@ if __name__ == "__main__":
     flux_lim = (0.2, 1.5)
     tpf_dir = "tpf/" # In particular, the path to tpf data has to be given.
     # We in fact run it only for a single central pixel (see 
-    # pixel_list=np.array([pixels[0]]) ), it won't affect results and 
+    # pixel_list=np.array([pixels[0][::-1]]) ), it won't affect results and 
     # makes life easier.
-#    (predictor_matrix, predictor_mask) = cpm_part1.run_cpm_part1(
-#            channel=channel, campaign=campaign, num_predictor=n_predictor,
-#            num_pca=n_pca, dis=distance, excl=exclusion, flux_lim=flux_lim, 
-#            input_dir=tpf_dir, pixel_list=np.array([pixels[0]]), 
-#            train_lim=None, return_predictor_epoch_masks=True)
     (predictor_matrix, predictor_matrix_apply, predictor_mask, predictor_mask_apply) = cpm_part1.run_cpm_part1(
             channel=channel, campaign=campaign_train, num_predictor=n_predictor,
             num_pca=n_pca, dis=distance, excl=exclusion, flux_lim=flux_lim, 
-            input_dir=tpf_dir, pixel_list=np.array([pixels[0]]), 
+            input_dir=tpf_dir, pixel_list=np.array([pixels[0][::-1]]), 
             train_lim=None, return_predictor_epoch_masks=True, 
             campaign_2=campaign)
             
