@@ -129,6 +129,8 @@ class TpfData(object):
 
     def check_pixel_covered(self, column, row):
         """check if we have data for given (column,row) pixel"""
+        if not isinstance(column, int) or not isinstance(row, int):
+            raise TypeError('Pixel coordinates must of int type')
         if not self.check_pixel_in_tpf(column, row):
             return False
         mask_value = self.mask[row - self.reference_row, column - self.reference_column]
