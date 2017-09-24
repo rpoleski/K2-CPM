@@ -2,12 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_matrix_subplots(figure, time, matrix, same_y_axis=True, data_mask=None):
+def plot_matrix_subplots(figure, time, matrix, same_y_axis=True, 
+                        data_mask=None, **kwargs):
     """
     Plot given 3D matrix in subpanels. Note that 3rd component of matrix.shape 
     must be the same as time.size i.e., matrix.shape[2]==time.size
     
-    TO_BE_DONE: add options to specify symbols, add errorbars, add mask options
+    **kwargs are passed Axis.plot()
     
     example usage:
     import matplotlib.pyplot as plt
@@ -48,7 +49,7 @@ def plot_matrix_subplots(figure, time, matrix, same_y_axis=True, data_mask=None)
             if data_mask is not None:
                 y_axis = y_axis[data_mask]
                 
-            ax.plot(time, y_axis, '.k')
+            ax.plot(time, y_axis, '.k', **kwargs)
             
             if i != 0:
                 ax.get_xaxis().set_visible(False)
