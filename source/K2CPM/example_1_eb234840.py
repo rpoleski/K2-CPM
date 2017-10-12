@@ -146,15 +146,17 @@ if __name__ == "__main__":
     prfs_masked = prfs[mask_cpm * mask_prfs]
 
     # Final calculation - combine CPM results and PRF information.
-    cpmf_flux_prfs_masked = cpm_flux_masked.T * prfs_masked
-    prfs_square_masked = prfs_masked**2
-    prfs_square_masked_cumsum = np.cumsum(prfs_square_masked, axis=1)
+    cpm_flux_prfs = cpm_flux.T * prfs
+    prfs_square = prfs**2
+    prfs_square[~(mask_cpm * mask_prfs)] = 0.
+    prfs_square_cumsum = np.cumsum(prfs_square, axis=1)
     # some epochs have to be corrected in order not to have div. by 0.
     prf_sum_limit = 1.e-6
-    sel = (prfs_square_masked_cumsum < prf_sum_limit)
-    prfs_square_masked_cumsum[sel] = prf_sum_limit
+    sel = (prfs_square_cumsum < prf_sum_limit)
+    prfs_square_cumsum[sel] = prf_sum_limit
     # And this is the very final calculation:
-    result = np.cumsum(cpmf_flux_prfs_masked, axis=1) / prfs_square_masked_cumsum 
+    result = np.cumsum(cpm_flux_prfs, axis=1) / prfs_square_cumsum
+    result = result[mask_cpm * mask_prfs]
     # Also need to mark very large and very small values.
     # I've set these limit after first run, 
     # they will change from object to object.
@@ -180,7 +182,7 @@ if __name__ == "__main__":
     print(plot_1_name)
 
     for i in numbers_to_plot:
-        plt.plot(time_masked, result[:,i], '.', label="{:} pix".format(i+1))
+        plt.plot(time[mask_prfs[mask_cpm]], result[:,i], '.', label="{:} pix".format(i+1))
     txt_2 = 'OGLE-BLG-ECL-234840 photometry using CPM+PRF postmortem ($\lambda = ${:g})'.format(l2)
     finish_figure(plot_2_name, title=txt_2)
     print(plot_2_name)
