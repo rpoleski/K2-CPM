@@ -29,10 +29,9 @@ class PrfForCampaign(object):
 
     def apply_grids_and_prf(self, ra, dec, pixels, bjds=None, fast=True):
         """For star at given (RA,Dec) try to calculate its positions for 
-        epochs in bjds and for every epoch predict PRF value for every 
-        pixel in pixels (type: list). If bjds is None than defaults to 
-        self.grids.bjd_array. fast=True means claculations will be much 
-        faster and just slightly less accurate. 
+        epochs (if possible) and for every epoch predict PRF value for every 
+        pixel in pixels (type: list). fast=True means claculations will be 
+        much faster and just slightly less accurate. 
         
         Returns:
           failed - number of epochs for which there are no grids
@@ -45,22 +44,15 @@ class PrfForCampaign(object):
         if not isinstance(ra, float) or not isinstance(dec, float):
             raise TypeError('wrong types of RA,Dec in apply_grids_and_prf(): {:} and {:}; 2 floats expected'.format(type(ra), type(dec)))
 
-        if bjds is None:
-            bjds = self.grids.bjd_array
-
         (positions_x, positions_y) = self.grids.apply_grids(ra=ra, dec=dec)
 
-        n_epochs = len(bjds)
-        out_prfs = np.zeros(shape=(n_epochs, len(pixels)))
-        mask = np.ones(n_epochs, dtype='bool')
-        for i in range(n_epochs):
-            try:
-                index = self.grids.index_for_bjd(bjds[i])
-            except:
-                mask[i] = False
+        mask = np.copy(self.grids.mask)
+        out_prfs = np.zeros(shape=(len(mask), len(pixels)))
+        for (i, mask_) in enumerate(mask):
+            if not mask_:
                 continue
             out_prfs[i] = self.prf_data.get_interpolated_prf(
-                    positions_x[index], positions_y[index], pixels, fast=fast) 
+                            positions_x[i], positions_y[i], pixels, fast=fast)
         
         self._positions_x = positions_x
         self._positions_y = positions_y
@@ -72,4 +64,21 @@ class PrfForCampaign(object):
     @property
     def grids_bjd_short(self):
         """return BJD array for grids (2450000 is subtracted)"""
-        return self.grids.bjd_array - 2450000.
+        return self.grids.bjd - 2450000.
+        
+    def get_mask_and_index_for_time(self, time):
+        """map the two vectors to very close values;
+        returns mask to be applied to input time: time[mask]
+        and index vector to be applied to apply_grids_and_prf() results: prfs[index]"""
+        index = []
+        mask = np.ones(len(time), dtype='bool')
+        
+        for (i, t) in enumerate(time):
+            if t < 2450000.:
+                t += 2450000.
+            try:
+                index.append(self.grids.index_for_bjd(t))
+            except:
+                mask[i] = False
+                
+        return (mask, index)

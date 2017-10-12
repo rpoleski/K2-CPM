@@ -51,8 +51,7 @@ if __name__ == "__main__":
 
     # Now we need to know the average position of the target. For this we 
     # need to setup grid transformations:
-    grid_name = '../../data_K2C9/grids_RADEC2pix_91_{:}.data'.format(channel)
-    grids = CampaignGridRaDec2Pix(campaign=campaign, file_name=grid_name)
+    grids = CampaignGridRaDec2Pix(campaign=campaign, channel=channel)
     # and then get mean position:
     (mean_x, mean_y) = grids.mean_position(ra, dec)
     print("Mean target position: {:.2f} {:.2f}\n".format(mean_x, mean_y))
@@ -130,26 +129,21 @@ if __name__ == "__main__":
                                 predictor_matrix=predictor_matrix[0],
                                 predictor_mask=predictor_mask[0],
                                 l2=l2, train_lim=train_limits)
-        cpm_flux.append(signal)
+        mask_cpm = tpf.epoch_mask * predictor_mask[0]
+        signal_full = np.zeros(len(mask_cpm))
+        signal_full[mask_cpm] = signal   
+        cpm_flux.append(signal_full)
     cpm_flux = np.array(cpm_flux)
 
     print("Plot CPM pixel curves:")
     file_name = "example_1_pixel_curves_CPM.png"
-    plot_pixel_curves(pixels, cpm_flux, time, file_name)
+    plot_pixel_curves(pixels, cpm_flux[:,mask_cpm], time, file_name)
     print(file_name)
   
-    # We need to have the same time vector - that's what we do here.
-    # Note that some epochs lack astrometric solutions.
-    index = []
-    mask = np.ones(len(time), dtype='bool')
-    for (i, t) in enumerate(time):
-        try:
-            index.append(prf_for_campaign.grids.index_for_bjd(t+2450000.))
-        except:
-            mask[i] = False
-    time_masked = time[mask]
-    cpm_flux_masked = cpm_flux[:, mask]
-    prfs_masked = prfs[index]
+    # We need to have vectors of the same shape:
+    time_masked = time[mask_prfs[mask_cpm]]
+    cpm_flux_masked = cpm_flux[:, mask_cpm * mask_prfs]
+    prfs_masked = prfs[mask_cpm * mask_prfs]
 
     # Final calculation - combine CPM results and PRF information.
     cpmf_flux_prfs_masked = cpm_flux_masked.T * prfs_masked
@@ -180,7 +174,7 @@ if __name__ == "__main__":
     numbers_to_plot = [0, 1, 2, 9, 14, 19]
 
     for i in numbers_to_plot:
-        plt.plot(time, np.sum(cpm_flux[:i+1,:], axis=0), '.', label="{:} pix".format(i+1))
+        plt.plot(time, np.sum(cpm_flux[:i+1, mask_cpm], axis=0), '.', label="{:} pix".format(i+1))
     txt_1 = 'OGLE-BLG-ECL-234840 photometry using CPM ($\lambda = ${:g})'.format(l2)
     finish_figure(plot_1_name, title=txt_1)
     print(plot_1_name)

@@ -71,6 +71,7 @@ def cpm_part2(tpf_time, tpf_flux, tpf_flux_err, tpf_epoch_mask,
     
     # run get_fit_matrix_ffi() which mostly applies joint epoch_mask
     fit_matrix_results = k2_cpm_small.get_fit_matrix_ffi(tpf_flux, tpf_epoch_mask, predictor_matrix, predictor_mask, l2, tpf_time, 0, ml=model)
+    #fit_matrix_results = k2_cpm_small.get_fit_matrix_ffi(tpf_flux, tpf_epoch_mask, predictor_matrix, predictor_mask, l2, tpf_time, None, ml=model)
     (target_flux, predictor_matrix, none_none, l2_vector, time) = fit_matrix_results
 
     # run CPM:
