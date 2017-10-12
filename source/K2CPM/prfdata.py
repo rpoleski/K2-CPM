@@ -41,8 +41,11 @@ class PrfData(object):
         provide channel or both module and output
         data_directory has to be set
         """
+        www = 'http://archive.stsci.edu/missions/kepler/fpc/prf/'
         if self.data_directory is None:
-            raise ValueError('PrfData: data_directory not set')
+            raise ValueError('PrfData: data_directory not set. You must ' +
+                            'download data from ' + www + ' and set their ' +
+                            'path accordingly')
         if (module is None) != (output is None):
             raise ValueError('You must set both module and output options')
         if (channel is None) == (module is None):
@@ -56,7 +59,9 @@ class PrfData(object):
         try:
             file_name = glob.glob(names)[-1]
         except:
-            raise FileNotFoundError('PRF files {:} not found'.format(names))
+            raise FileNotFoundError(('PRF files {:} not found. The file ' +
+                                'should be downloaded from ' + www
+                                ).format(names))
         
         keys = ['CRPIX1P', 'CRVAL1P', 'CDELT1P', 'CRPIX2P', 'CRVAL2P', 'CDELT2P']
         with fits.open(file_name) as prf_hdus:
