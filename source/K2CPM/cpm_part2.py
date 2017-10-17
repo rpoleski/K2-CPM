@@ -14,6 +14,17 @@ def read_true_false_file(file_name):
             out.append(parser[line[:-1].upper()])
     return np.array(out)
 
+def check_l2_and_l2_per_pixel(l2, l2_per_pixel):
+    """check if exactly one of l2 and l2_per_pixel is set to a float value"""
+    if (l2 is None) == (l2_per_pixel is None):
+        raise ValueError('In cpm_part2 you must set either l2 or l2_per_pixel')
+    if l2_per_pixel is not None:
+        if not isinstance(l2_per_pixel, (float, np.floating)):
+            raise TypeError('l2_per_pixel must be of float type')
+    else:
+        if not isinstance(l2, (float, np.floating)):
+            raise TypeError('l2 must be of float type')
+
 def cpm_part2_subcampaigns(tpf_time_train, tpf_flux_train, tpf_flux_err_train,
         tpf_epoch_mask_train, predictor_matrix_train, predictor_mask_train,
         tpf_time_apply, tpf_flux_apply, tpf_flux_err_apply, 
@@ -21,17 +32,9 @@ def cpm_part2_subcampaigns(tpf_time_train, tpf_flux_train, tpf_flux_err_train,
         l2=None, l2_per_pixel=None, train_lim=None, model=None):
     """This version of CPM part2 find coefficients using one subcampaign and 
     applies them to the other subcampaign."""
-    if (l2 is None) == (l2_per_pixel is None):
-        raise ValueError('In cpm_part2() you must set either l2 or l2_per_pixel')
+    check_l2_and_l2_per_pixel(l2, l2_per_pixel)
     if l2_per_pixel is not None:
-        if not isinstance(l2_per_pixel, float):
-            raise TypeError('l2_per_pixel must be of float type')
         l2 = l2_per_pixel * predictor_matrix_train.shape[1]
-    else:
-        if not isinstance(l2, float):
-            raise TypeError('l2 must be of float type')
-    if model is not None:
-        raise NotImplementedError("This feature has not been implemented yet")
 
     fit_matrix_results_1 = k2_cpm_small.get_fit_matrix_ffi(tpf_flux_train, tpf_epoch_mask_train, predictor_matrix_train, predictor_mask_train, l2, tpf_time_train, poly=0, ml=model)
     (target_flux_train, predictor_matrix_train, _, l2_vector_train, time_train) = fit_matrix_results_1
@@ -44,6 +47,51 @@ def cpm_part2_subcampaigns(tpf_time_train, tpf_flux_train, tpf_flux_err_train,
     fit_flux = np.dot(predictor_matrix_apply, result)
     dif = target_flux_apply - fit_flux[:,0]
     return (result, fit_flux, dif, time_apply)
+
+def cpm_part2_prf_model_flux(tpf_flux, tpf_flux_err, tpf_flux_mask,
+            predictor_matrix, predictor_matrix_mask,
+            prf, prf_mask,
+            model_flux,
+            l2=None, l2_per_pixel=None, 
+            train_lim=None, time=None,
+            add_constant=False):
+    """
+    Run part 2 of CPM knowing the PRF values for given pixel and the model 
+    of total flux from given source (in the case of microlensing F_s*A). 
+    All the required parameters have the same length of the first dimension. 
+
+    tpf_flux_err is not used currently
+    """
+    check_l2_and_l2_per_pixel(l2, l2_per_pixel)
+    if l2_per_pixel is not None:
+        l2 = l2_per_pixel * predictor_matrix.shape[1]
+
+    mask = tpf_flux_mask * predictor_matrix_mask * prf_mask
+    predictor_masked = predictor_matrix[mask]
+    flux_masked = tpf_flux[mask] - prf[mask] * model_flux[mask]
+
+    if add_constant:
+        adds = np.ones(predictor_masked.shape[0]) * np.mean(flux_masked)
+        predictor_masked = np.concatenate((predictor_masked, adds), axis=1)
+
+    if train_lim is not None:
+        if time is None:
+            raise ValueError('parameter time has to be provided when train_lim parameter is provided')
+        train_mask = (time[mask]<train_lim[0]) | (time[mask]>train_lim[1])
+    else:
+        train_mask = np.ones(sum(mask),  dtype=bool)
+
+    covar = None
+    coefs = lss.linear_least_squares(predictor_masked[train_mask], flux_masked[train_mask], covar, l2)
+
+    fit_flux = np.dot(predictor_masked, coefs)
+
+    residue = flux_masked - fit_flux[:,0]
+    residue_out = np.zeros(len(mask), dtype=float)
+    residue_out[mask] = residue
+
+    return (residue_out, mask)
+
 
 # TO_BE_DONE - use tpf_flux_err if user wants
 def cpm_part2(tpf_time, tpf_flux, tpf_flux_err, tpf_epoch_mask, 
@@ -59,15 +107,9 @@ def cpm_part2(tpf_time, tpf_flux, tpf_flux_err, tpf_epoch_mask,
     is calculated. Note that l2_per_pixel should be on order of a few, and 
     l2 should be on order of thousands. 
     """
-    if (l2 is None) == (l2_per_pixel is None):
-        raise ValueError('In cpm_part2() you must set either l2 or l2_per_pixel')
+    check_l2_and_l2_per_pixel(l2, l2_per_pixel)
     if l2_per_pixel is not None:
-        if not isinstance(l2_per_pixel, float):
-            raise TypeError('l2_per_pixel must be of float type')
         l2 = l2_per_pixel * predictor_matrix.shape[1]
-    else:
-        if not isinstance(l2, float):
-            raise TypeError('l2 must be of float type')
     
     # run get_fit_matrix_ffi() which mostly applies joint epoch_mask
     fit_matrix_results = k2_cpm_small.get_fit_matrix_ffi(tpf_flux, tpf_epoch_mask, predictor_matrix, predictor_mask, l2, tpf_time, 0, ml=model)
