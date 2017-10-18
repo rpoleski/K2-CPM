@@ -66,10 +66,10 @@ def cpm_part2_prf_model_flux(tpf_flux, tpf_flux_err, tpf_flux_mask,
     check_l2_and_l2_per_pixel(l2, l2_per_pixel)
     if l2_per_pixel is not None:
         l2 = l2_per_pixel * predictor_matrix.shape[1]
-    if np.any(np.isnan(model_flux[mask])):
-        raise ValueError('unmasked nan values in model input for cpm_part2_prf_model_flux()')
 
     mask = tpf_flux_mask * predictor_matrix_mask * prf_mask
+    if np.any(np.isnan(model_flux[mask])):
+        raise ValueError('unmasked nan values in model input for cpm_part2_prf_model_flux()')
     predictor_masked = predictor_matrix[mask]
     flux_masked = tpf_flux[mask] - prf[mask] * model_flux[mask]
 
