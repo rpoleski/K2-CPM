@@ -3,6 +3,7 @@ import numpy as np
 
 from K2CPM import k2_cpm_small
 from K2CPM import matrix_xy
+from K2CPM import leastSquareSolver as lss
 
 
 def read_true_false_file(file_name):
@@ -65,6 +66,8 @@ def cpm_part2_prf_model_flux(tpf_flux, tpf_flux_err, tpf_flux_mask,
     check_l2_and_l2_per_pixel(l2, l2_per_pixel)
     if l2_per_pixel is not None:
         l2 = l2_per_pixel * predictor_matrix.shape[1]
+    if np.any(np.isnan(model_flux[mask])):
+        raise ValueError('unmasked nan values in model input for cpm_part2_prf_model_flux()')
 
     mask = tpf_flux_mask * predictor_matrix_mask * prf_mask
     predictor_masked = predictor_matrix[mask]
@@ -91,7 +94,6 @@ def cpm_part2_prf_model_flux(tpf_flux, tpf_flux_err, tpf_flux_mask,
     residue_out[mask] = residue
 
     return (residue_out, mask)
-
 
 # TO_BE_DONE - use tpf_flux_err if user wants
 def cpm_part2(tpf_time, tpf_flux, tpf_flux_err, tpf_epoch_mask, 
