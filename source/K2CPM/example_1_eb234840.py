@@ -12,6 +12,16 @@ import plot_utils
 import tpfdata
 
 
+def running_mean_with_edges(vector, half_size):
+    """calculate running mean including the edge points - note that this does not 
+    conserve sum of data"""
+    out = vector * 0.
+    indexes = np.arange(len(vector))
+    for i in indexes:
+        mask = (np.abs(indexes - i) <= half_size)
+        out[i] = sum(vector[mask]) / float(sum(mask))
+    return out
+
 def finish_figure(file_name, title=None):
     """some standard things to be done after the main plot is done"""
     plt.legend(loc='lower left')
@@ -186,4 +196,54 @@ if __name__ == "__main__":
     txt_2 = 'OGLE-BLG-ECL-234840 photometry using CPM+PRF postmortem ($\lambda = ${:g})'.format(l2)
     finish_figure(plot_2_name, title=txt_2)
     print(plot_2_name)
+
+    # In case you want to save smoothed lc 
+    if True: # if you want to export model light curve:
+    #if False:
+        print("\nAdditional plots and data files:")
+        half_bin = 12
+        lim = -2000.
+        file_1 = "example_1_model.dat"
+        file_2 = "example_1_model.png"
+        file_3 = "example_1_model_averaged.dat"
+        file_4 = "example_1_model_averaged.png"
+        n_average = 20
+        n_average = 19
+
+        raw = np.sum(cpm_flux[:n_average, mask_cpm], axis=0)
+        averaged = running_mean_with_edges(raw, half_bin)
+        averaged_out = tpf.jd_short * 0.
+        averaged_out[tpf.epoch_mask] = np.interp(tpf.jd_short[tpf.epoch_mask], time, averaged)
+        indexes = np.arange(len(averaged_out))
+        averaged_out[~tpf.epoch_mask] = np.interp(indexes[~tpf.epoch_mask], indexes[tpf.epoch_mask], averaged_out[tpf.epoch_mask])
+
+        np.savetxt(file_1, averaged_out)
+        print(file_1)
+        plt.plot(tpf.jd_short, averaged_out, '.', label='some')
+        finish_figure(file_2, title='averaged {:}'.format(half_bin))
+        print(file_2)
+
+        sel = (averaged_out < lim)
+        parabola = np.polyfit(np.arange(len(sel))[sel], averaged_out[sel], 2)
+        index_minimum = int(-parabola[1] / (2. * parabola[0]))
+        print("index of minimum: {:}".format(index_minimum)) # 926
+        print("time of minimum: {:}".format(tpf.jd_short[index_minimum])) # 7520.01975
+
+        half_vector = averaged_out[:index_minimum+1]
+        add = averaged_out[index_minimum+1:]
+        half_vector[-len(add):] += add[::-1]
+        half_vector[-len(add):] /= 2.
+        output = np.concatenate( (half_vector, half_vector[::-1]) )
+        output_time = output * 0.
+        output_time[:index_minimum+1] = tpf.jd_short[:index_minimum+1] - tpf.jd_short[index_minimum]
+        output_time[index_minimum:-1] = -output_time[:index_minimum+1][::-1]
+        output_time[-1] = output_time[-2] + (output_time[-2]-output_time[-3])
+        for (i, t) in enumerate(output_time):
+            if np.isnan(t):
+                output_time[i] = output_time[i-1] + (output_time[i-2]-output_time[i-3])
+        np.savetxt(file_3, np.array([output_time, output]).T)
+        print(file_3)
+        plt.plot(output_time, output, '.', label='some')
+        finish_figure(file_4, title='idealized model')
+        print(file_4)
 
